@@ -1,0 +1,12 @@
+{
+  "name": "Pong",
+  "version": "0.1.0",
+  "description": "Classic Pong — VibeGE reference implementation",
+  "entry": "src/pong/main.lua",
+  "vibege": {
+    "sdk_version": "0.1.0",
+    "runtime_version": ">=0.1.0"
+  },
+  "tags": ["arcade", "multiplayer", "reference"],
+  "author": "VibeGE"
+}
