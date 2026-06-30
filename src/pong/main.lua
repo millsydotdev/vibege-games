@@ -1,21 +1,33 @@
 -- Pong — VibeGE Reference Game
--- Validates: input, render, audio, suspension, game loop, particles
+-- Validates: input, render, text, audio, suspension, particles
 
 local player_y = 250
 local ai_y = 250
-local ball_x = 400
-local ball_y = 300
-local ball_vx = 300
-local ball_vy = 150
-local paddle_h = 100
-local paddle_w = 15
+local ball_x, ball_y = 400, 300
+local ball_vx, ball_vy = 300, 150
+local paddle_h, paddle_w = 100, 15
 local ball_sz = 10
-local pl_score = 0
-local ai_score = 0
-local sw = 800
-local sh = 600
+local pl_score, ai_score = 0, 0
+local sw, sh = 800, 600
 local particles = {}
 local shake = 0
+local suspended = false
+
+local function emit(x, y, n, r, g, b)
+    for i = 1, n do
+        table.insert(particles, {
+            x = x, y = y,
+            vx = math.random(-200, 200), vy = math.random(-200, 200),
+            sz = math.random(3, 6), life = math.random(20, 70) / 100,
+            r = r, g = g, b = b
+        })
+    end
+end
+
+local function reset(dir)
+    ball_x = sw / 2; ball_y = sh / 2
+    ball_vx = dir; ball_vy = math.random(-200, 200)
+end
 
 function init()
     math.randomseed(os.time())
@@ -23,11 +35,14 @@ function init()
 end
 
 function update(dt)
-    -- Player
+    if suspended then return end
+    if vibege.input.is_key_down("escape") then error("exit", 0) end
+
+    -- Player paddle
     if vibege.input.is_key_down("w") then player_y = player_y - 400 * dt end
     if vibege.input.is_key_down("s") then player_y = player_y + 400 * dt end
 
-    -- AI
+    -- AI paddle
     local target = ball_y - paddle_h / 2
     local speed = 250
     if ai_y + paddle_h / 2 < ball_y then ai_y = ai_y + speed * dt
@@ -53,32 +68,32 @@ function update(dt)
     if ball_y <= ball_sz or ball_y >= sh - ball_sz then
         ball_vy = -ball_vy
         emit(ball_x, ball_y, 3, 0.5, 0.7, 1.0)
-        if vibege.audio and vibege.audio.play_bounce then vibege.audio.play_bounce() end
+        if vibege.audio then vibege.audio.play_bounce() end
     end
 
-    -- Player hit
+    -- Player paddle hit
     if ball_x <= paddle_w + ball_sz and ball_y >= player_y and ball_y <= player_y + paddle_h and ball_vx < 0 then
         ball_vx = -ball_vx * 1.08
         ball_vy = ball_vy + (ball_y - (player_y + paddle_h / 2)) * 60
         shake = 3; emit(ball_x, ball_y, 8, 1, 1, 1)
-        if vibege.audio and vibege.audio.play_hit then vibege.audio.play_hit() end
+        if vibege.audio then vibege.audio.play_hit() end
     end
 
-    -- AI hit
+    -- AI paddle hit
     if ball_x >= sw - paddle_w - ball_sz and ball_y >= ai_y and ball_y <= ai_y + paddle_h and ball_vx > 0 then
         ball_vx = -ball_vx * 1.08
         ball_vy = ball_vy + (ball_y - (ai_y + paddle_h / 2)) * 60
         shake = 3; emit(ball_x, ball_y, 8, 1, 1, 1)
-        if vibege.audio and vibege.audio.play_hit then vibege.audio.play_hit() end
+        if vibege.audio then vibege.audio.play_hit() end
     end
 
     -- Scoring
     if ball_x < 0 then
-        ai_score = ai_score + 1; reset(-300); emit(ball_x, ball_y, 20, 1, 0.3, 0.3); shake = 6
-        if vibege.audio and vibege.audio.play_score then vibege.audio.play_score() end
+        ai_score = ai_score + 1; reset(300); emit(ball_x, ball_y, 20, 1, 0.3, 0.3); shake = 6
+        if vibege.audio then vibege.audio.play_score() end
     elseif ball_x > sw then
-        pl_score = pl_score + 1; reset(300); emit(ball_x, ball_y, 20, 0.3, 1, 0.3); shake = 6
-        if vibege.audio and vibege.audio.play_score then vibege.audio.play_score() end
+        pl_score = pl_score + 1; reset(-300); emit(ball_x, ball_y, 20, 0.3, 1, 0.3); shake = 6
+        if vibege.audio then vibege.audio.play_score() end
     end
 
     player_y = math.max(0, math.min(sh - paddle_h, player_y))
@@ -86,6 +101,7 @@ function update(dt)
 end
 
 function render()
+    if suspended then return end
     local sx, sy = 0, 0
     if shake > 0 then
         if math.random(0, 1) == 0 then sx = -shake else sx = shake end
@@ -96,6 +112,10 @@ function render()
 
     -- Centre line
     vibege.render.draw_rect(sw / 2 - 2 + sx, 0 + sy, 4, sh, 0.15, 0.15, 0.25, 1)
+
+    -- Score text
+    local score_str = tostring(pl_score) .. "  -  " .. tostring(ai_score)
+    vibege.render.draw_text(sw / 2 - #score_str * 6 + sx, 10 + sy, score_str, 10, 1, 1, 1)
 
     -- Particles
     for _, p in ipairs(particles) do
@@ -111,25 +131,23 @@ function render()
 end
 
 function suspend()
-    vibege.render.clear(0, 0, 0, 1)
+    suspended = true
 end
 
-function resume() end
-function restore_state(s) end
+function resume()
+    suspended = false
+end
 
 function get_state()
-    return pl_score .. "," .. ai_score .. "," .. ball_x .. "," .. ball_y
+    return table.concat({pl_score, ai_score, ball_x, ball_y, ball_vx, ball_vy, player_y, ai_y}, ",")
 end
 
-function reset(dir)
-    ball_x = sw / 2; ball_y = sh / 2; ball_vx = dir; ball_vy = math.random(1, 400) - 200
-end
-
-function emit(x, y, n, r, g, b)
-    for i = 1, n do
-        table.insert(particles, {
-            x = x, y = y, vx = math.random(1, 400) - 200, vy = math.random(1, 400) - 200,
-            sz = math.random(3, 6), life = math.random(20, 70) / 100, r = r, g = g, b = b
-        })
-    end
+function restore_state(s)
+    local parts = {}
+    for v in s:gmatch("[^,]+") do table.insert(parts, tonumber(v)) end
+    pl_score = parts[1]; ai_score = parts[2]
+    ball_x = parts[3]; ball_y = parts[4]
+    ball_vx = parts[5]; ball_vy = parts[6]
+    player_y = parts[7]; ai_y = parts[8]
+    suspended = false
 end
