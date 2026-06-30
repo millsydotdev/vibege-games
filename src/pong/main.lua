@@ -43,7 +43,6 @@ function update(dt)
     if vibege.input.is_key_down("s") then player_y = player_y + 400 * dt end
 
     -- AI paddle
-    local target = ball_y - paddle_h / 2
     local speed = 250
     if ai_y + paddle_h / 2 < ball_y then ai_y = ai_y + speed * dt
     elseif ai_y + paddle_h / 2 > ball_y then ai_y = ai_y - speed * dt end

@@ -52,16 +52,6 @@ end
 function render()
     vibege.render.clear(0.05, 0.05, 0.15, 1)
 
-    -- Draw "CODE:" label above the digits
-    local label = "CODE:"
-    local label_x = (sw - 5 * 5 * cell) / 2
-    local label_y = sh / 2 - 4 * cell
-    for i = 1, 5 do
-        local c = string.byte(label, i)
-        local idx = c - 48  -- '0' = 48 in ASCII, but 'C','O','D','E',':' are different
-        -- Just draw label as a visual indicator
-    end
-
     -- Draw code label using letter C
     local letter_c = {1,1,1,1,1, 1,0,0,0,0, 1,0,0,0,0, 1,0,0,0,0, 1,0,0,0,0, 1,0,0,0,0, 1,1,1,1,1}
     local letter_o = {1,1,1,1,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,0,0,0,1, 1,1,1,1,1}
