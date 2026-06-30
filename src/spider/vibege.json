@@ -1,0 +1,11 @@
+{
+    "name": "Spider Solitaire",
+    "version": "1.0.0",
+    "entry": "src/spider/main.lua",
+    "author": "VibeGE",
+    "description": "Spider Solitaire (1 Suit). Build complete descending runs to remove them.",
+    "tags": ["cards", "solitaire", "spider", "singleplayer"],
+    "engine_version": "0.2.0-alpha.1",
+    "permissions": ["storage"],
+    "category": "puzzle"
+}

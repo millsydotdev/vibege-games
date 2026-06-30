@@ -1,0 +1,11 @@
+{
+    "name": "Solitaire",
+    "version": "1.0.0",
+    "entry": "src/solitaire/main.lua",
+    "author": "VibeGE",
+    "description": "Klondike Solitaire - Draw 3. The classic single-player card game.",
+    "tags": ["cards", "solitaire", "classic", "singleplayer"],
+    "engine_version": "0.2.0-alpha.1",
+    "permissions": ["storage"],
+    "category": "puzzle"
+}
