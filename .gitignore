@@ -1,5 +1,11 @@
-node_modules/
-dist/
+# Build artifacts
+target/
+*.vibepkg
+
+# Editor files
 .vscode/
+.idea/
+
+# OS files
 .DS_Store
-.env
+Thumbs.db
