@@ -1,0 +1,55 @@
+name: Build & Seed Games
+on:
+  push:
+    branches: [main]
+    paths: ["src/**/*.lua", "src/**/vibege.json"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build .vibepkg
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Checkout CLI
+        uses: actions/checkout@v4
+        with: { repository: millsydotdev/vibege-cli, path: cli }
+
+      - name: Setup Rust
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+
+      - name: Build CLI
+        run: cargo build --release
+        working-directory: cli
+
+      - name: Build all games
+        run: |
+          for game in pong solitaire spider; do
+            ./cli/target/release/vibege build "src/$game"
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibepkgs
+          path: src/*/build/debug/*.vibepkg
+
+  seed:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: vibepkgs, path: build }
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with: { node-version: 20 }
+
+      - name: Seed registry
+        run: node scripts/seed-games.mjs
+        env:
+          VIBEGE_REGISTRY_URL: ${{ vars.VIBEGE_REGISTRY_URL || 'https://vibege-backend.vercel.app/api/v1' }}
+          VIBEGE_TOKEN: ${{ secrets.VIBEGE_TOKEN }}
