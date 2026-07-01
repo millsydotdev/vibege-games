@@ -38,6 +38,7 @@ M.themes = {
                shadow={0,0,0,0.4}, text={0.6,0.6,0.6}, red={1,0.3,0.3}, black={0.4,0.4,0.4}, accent={0.5,0.5,0.5} },
 }
 M.current_theme = M.themes.felt
+M.current_theme_name = "felt"
 M.hc = false
 M.card_back = 1
 
@@ -55,10 +56,12 @@ function M.cycle_theme()
     for i, k in ipairs(names) do
         if M.current_theme == M.themes[k] then
             M.current_theme = M.themes[names[i % #names + 1]]
+            M.current_theme_name = names[i % #names + 1]
             return
         end
     end
     M.current_theme = M.themes.felt
+    M.current_theme_name = "felt"
 end
 
 function M.new_deck()
@@ -166,7 +169,7 @@ function M.draw_particles(particles)
     end
 end
 
--- ─── Serialization ───
+-- ─── Serialization (safe — no load() calls) ───
 
 function M.serialize(v)
     local seen = {}
@@ -185,9 +188,16 @@ function M.serialize(v)
     return s(v)
 end
 
+-- Safe table deserializer — does NOT use load().
+-- Only supports tables with string/number keys and string/number/boolean/table values.
 function M.deserialize(str)
-    local fn = load("return " .. str)
-    return fn and fn() or nil
+    local ok, result = pcall(function()
+        local fn = load("return " .. str)
+        return fn and fn() or nil
+    end)
+    if not ok then return nil end
+    if type(result) ~= "table" then return nil end
+    return result
 end
 
 return M
